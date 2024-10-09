@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('student_dataset_3000_for_training.csv')
+df = pd.read_csv('D:\Workspace\Coding\Codes\Projects\VARK\VARK_LMS\student_dataset_3000_for_training.csv')
 
 le = LabelEncoder()
 df['Gender'] = le.fit_transform(df['Gender'])  # Convert M/F to 0/1
@@ -39,12 +39,6 @@ def evaluate_model(y_true, y_pred, model_name):
         "Recall": recall,
         "F1 Score": f1
     }
-    print(f"{model_name} Metrics:")
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print(f"Precision: {precision * 100:.2f}%")
-    print(f"Recall: {recall * 100:.2f}%")
-    print(f"F1 Score: {f1 * 100:.2f}%\n")
-    
     print(f"{model_name} Metrics:")
     print(f"Accuracy: {accuracy * 100:.2f}%")
     print(f"Precision: {precision * 100:.2f}%")
