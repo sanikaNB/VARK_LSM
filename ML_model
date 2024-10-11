@@ -1,0 +1,163 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+
+
+df = pd.read_csv('student_dataset_3000_for_training.csv')
+
+# Encoding categorical variables
+le = LabelEncoder()
+df['Gender'] = le.fit_transform(df['Gender'])  # Convert M/F to 0/1
+df['Year'] = le.fit_transform(df['Year'])  # Convert year to categorical (1st, 2nd, etc.)
+df['Brain Dominance'] = le.fit_transform(df['Brain Dominance'])  # Left/Right to 0/1
+df['Primary VARK'] = le.fit_transform(df['Primary VARK'])
+
+# Define features (exclude the first 6 columns and the 'Primary VARK' column)
+X = df.iloc[:, 6:-7]
+# y=df.iloc[:,18:-1]
+y = df['Primary VARK']
+
+abc=X.head
+
+print(abc)
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+
+# Scale the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+models = []
+performances = {}
+
+# Models
+lr = LogisticRegression(max_iter=1000)
+dt = DecisionTreeClassifier()
+svm = SVC()
+rf = RandomForestClassifier()
+knn= KNeighborsClassifier(n_neighbors=3)
+
+# Fit the models
+lr.fit(X_train, y_train)
+dt.fit(X_train, y_train)
+svm.fit(X_train, y_train)
+rf.fit(X_train, y_train)
+knn.fit(X_train, y_train)
+
+# Function to evaluate model
+# def evaluate_model(y_true, y_pred, model_name):
+#     accuracy = accuracy_score(y_true, y_pred)
+#     precision = precision_score(y_true, y_pred, average='macro')
+#     recall = recall_score(y_true, y_pred, average='macro')
+#     f1 = f1_score(y_true, y_pred, average='macro')
+    
+#     print(f"{model_name} Metrics:")
+#     print(f"Accuracy: {accuracy * 100:.2f}%")
+#     print(f"Precision: {precision * 100:.2f}%")
+#     print(f"Recall: {recall * 100:.2f}%")
+#     print(f"F1 Score: {f1 * 100:.2f}%\n")
+
+
+def evaluate_model(y_true, y_pred, model_name):
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, average='macro')  # Macro for multiclass
+    recall = recall_score(y_true, y_pred, average='macro')
+    f1 = f1_score(y_true, y_pred, average='macro')
+    performances[model_name] = {
+        "Accuracy": accuracy,
+        "Precision": precision,
+        "Recall": recall,
+        "F1 Score": f1
+    }
+    print(f"{model_name} Metrics:")
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print(f"Precision: {precision * 100:.2f}%")
+    print(f"Recall: {recall * 100:.2f}%")
+    print(f"F1 Score: {f1 * 100:.2f}%\n")
+    
+    # Confusion Matrix
+    cm = confusion_matrix(y_true, y_pred)
+    print(f"Confusion Matrix for {model_name}:")
+    print(cm)
+    
+    # Visualize Confusion Matrix
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=le.classes_)  # Displaying the original VARK labels
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title(f'Confusion Matrix - {model_name}')
+    plt.show()
+
+# Model evaluations
+y_pred_lr = lr.predict(X_test)
+evaluate_model(y_test, y_pred_lr, 'Logistic Regression')
+
+y_pred_dt = dt.predict(X_test)
+evaluate_model(y_test, y_pred_dt, 'Decision Tree')
+
+y_pred_svm = svm.predict(X_test)
+evaluate_model(y_test, y_pred_svm, 'SVM')
+
+y_pred_rf = rf.predict(X_test)
+evaluate_model(y_test, y_pred_rf, 'Random Forest')
+
+y_pred_svm = knn.predict(X_test)
+evaluate_model(y_test, y_pred_svm, 'KNN')
+
+
+
+# Ask for user input for prediction
+def get_user_input():
+    print("Please enter the following details:")
+    time_spent_video = float(input("Time Spent on Video (min): "))
+    avg_video_score = float(input("Average Video Score: "))
+    video_completion_rate = float(input("Video Completion Rate (%): "))
+    time_spent_audio = float(input("Time Spent on Audio (min): "))
+    avg_audio_score = float(input("Average Audio Score: "))
+    audio_completion_rate = float(input("Audio Completion Rate (%): "))
+    time_spent_article = float(input("Time Spent on Article (min): "))
+    avg_article_score = float(input("Average Article Score: "))
+    article_completion_rate = float(input("Article Completion Rate (%): "))
+    time_spent_interactive = float(input("Time Spent on Interactive (min): "))
+    avg_interactive_score = float(input("Average Interactive Score: "))
+    interactive_completion_rate = float(input("Interactive Completion Rate (%): "))
+
+
+    return [[time_spent_video, avg_video_score, video_completion_rate, time_spent_audio, avg_audio_score, audio_completion_rate,
+            time_spent_article, avg_article_score, article_completion_rate, time_spent_interactive, avg_interactive_score,
+            interactive_completion_rate]]
+
+# # Get user input
+new_data = get_user_input()
+
+# # Scale the input data
+new_data_scaled = scaler.transform(new_data)
+
+# Make predictions with all models
+predicted_vark_rf = rf.predict(new_data_scaled)
+predicted_vark_lr = lr.predict(new_data_scaled)
+predicted_vark_svm = svm.predict(new_data_scaled)
+predicted_vark_dt = dt.predict(new_data_scaled)
+
+# # Decode the prediction back to the original VARK label
+predicted_vark_label_rf = le.inverse_transform(predicted_vark_rf)
+predicted_vark_label_lr = le.inverse_transform(predicted_vark_lr)
+predicted_vark_label_svm = le.inverse_transform(predicted_vark_svm)
+predicted_vark_label_dt = le.inverse_transform(predicted_vark_dt)
+
+# # Display predictions from each model
+print(f"Predicted VARK type (Random Forest): {predicted_vark_label_rf[0]}")
+print(f"Predicted VARK type (Logistic Regression): {predicted_vark_label_lr[0]}")
+print(f"Predicted VARK type (SVM): {predicted_vark_label_svm[0]}")
+print(f"Predicted VARK type (Decision Tree): {predicted_vark_label_dt[0]}")
+
